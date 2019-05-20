@@ -1,0 +1,10 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - cd frontendapp
+  - docker build -t erickgallani/kubernetestest -f Dockerfile.dev .
+
+script:
+  - docker run erickgallani/kubernetestest npm run test -- --coverage
