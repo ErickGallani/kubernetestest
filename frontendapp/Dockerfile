@@ -1,0 +1,17 @@
+# Step 1 - Build step from the multistep Dockerfile
+FROM node:alpine as builder
+
+WORKDIR /app
+
+COPY package.json .
+
+RUN npm install
+
+COPY . .
+
+CMD ["npm", "run", "build"]
+
+# Step 2 - Run the application built on the first step
+FROM nginx
+
+COPY --from=builder /app/build /usr/share/nginx/html
