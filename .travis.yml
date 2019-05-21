@@ -8,3 +8,6 @@ before_install:
 
 script:
   - docker run erickgallani/kubernetestest npm run test -- --coverage
+
+deploy:
+  provider: azure_web_apps
