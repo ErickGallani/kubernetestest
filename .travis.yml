@@ -1,0 +1,34 @@
+sudo: required
+services:
+  - docker
+env:
+  global:
+    - SHA=$(git rev-parse HEAD)
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
+before_install:
+  # uncrypt the service-account file to be used to auth this request to google cloud
+  - openssl aes-256-cbc -K $encrypted_0c35eebf403c_key -iv $encrypted_0c35eebf403c_iv -in service-account.json.enc -out service-account.json -d
+  # install google cloude sdk to have access to gcloud cli
+  - curl https://sdk.cloud.google.com | bash > /dev/null;
+  - source $HOME/google-cloud-sdk/path.bash.inc
+  # installing the kubectl to manipulate kubernetes
+  - gcloud components update kubectl
+  # auth our selfs to google cloud using the service-account file
+  - gcloud auth activate-service-account --key-file service-account.json
+  # set the project to execute the commands
+  - gcloud config set project kubernetes-test-242623
+  - gcloud config set compute/zone europe-west1-b
+  # set the kubernetes cluster to be used
+  - gcloud container clusters get-credentials kubernetes-multi-cluster
+  # login to docker hub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build -t erickgallani/fibonacci-multi-docker-test-client -f ./client/Dockerfile.ci ./client
+
+script:
+  - docker run erickgallani/fibonacci-multi-docker-test-client npm run test -- --coverage
+
+deploy:
+  provider: script
+  script: bash ./deploy.sh
+  on:
+    branch: master
